@@ -46,5 +46,5 @@ jobs:
       # Destruir la infraestructura
       - name: Terraform Destroy
         working-directory: infra/terraform
-        run: terraform destroy -var-file="infra/terraform/${{ github.event.inputs.environment }}.tfvars" -auto-approve
+        run: terraform destroy -var-file="${{ github.event.inputs.environment }}.tfvars" -auto-approve
 
