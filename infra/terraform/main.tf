@@ -6,6 +6,12 @@ terraform {
       version = "~> 6.0"
     }
   }
+
+  backend "s3" {
+    bucket = "bucket-tf"
+    key    = "root/terraform.tfstate"      # la ruta + nombre del archivo dentro del bucket
+    region = "us-east-1"
+  }
 }
 
 provider "aws" {
