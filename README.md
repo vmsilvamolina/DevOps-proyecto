@@ -30,7 +30,8 @@ StockWiz es la aplicación base entregada para el proyecto. Este repositorio con
 10. Rollback y recuperación  
 11. Troubleshooting  
 12. Checklist para completar (placeholders)  
-13. Contacto
+13. Estrategia de Ramas (Branching Strategy)
+14. Contacto
 
 ---
 
@@ -48,3 +49,66 @@ StockWiz es la aplicación base entregada para el proyecto. Este repositorio con
 ## 2) Estructura recomendada del repo
 > Si la estructura difiere, actualizá las rutas en los pasos de abajo.
 
+## 13) Estrategia de Ramas (Branching Strategy)
+
+Para este proyecto se implementó una estrategia **Trunk-Based Development**, adaptada al flujo de trabajo del equipo y a los requerimientos del obligatorio. Esta estrategia permite ciclos de integración más rápidos, mayor visibilidad del trabajo en curso y despliegues automatizados basados en la rama principal.
+
+### 🔹 Ramas principales
+- **main**  
+  Contiene el código estable y listo para despliegue.  
+  Cada integración a `main` dispara el pipeline de GitHub Actions que ejecuta:
+  - Validación de Terraform (fmt / validate)
+  - Terraform Plan + Apply
+  - Construcción y publicación de imágenes en ECR
+  - Actualización del servicio ECS
+
+### 🔹 Ramas de desarrollo
+- **feature/\***  
+  Cada nueva funcionalidad, fix o mejora se desarrolla en una rama temporal.  
+  Ejemplos:
+  - `feature/agregar-test-k6`
+  - `feature/dockerfile-backend-opt`
+
+  Estas ramas:
+  1. Se crean desde `main`
+  2. Se mantienen pequeñas y de corta duración
+  3. Terminan en un **Pull Request** (PR) hacia `main`
+
+### 🔹 Pull Requests (PR)
+Los PRs son obligatorios para integrar cambios en `main`.  
+Cada PR debe incluir:
+- Descripción del cambio
+- Qué componentes modifica (Dockerfile, Terraform, app, etc.)
+- Checklist de pruebas locales realizadas
+- Revisión de al menos un miembro del equipo
+
+El merge solo se realiza cuando:
+1. El PR está aprobado  
+2. Los checks automáticos pasan (lint, build, validación de Terraform)
+
+### 🔹 Política de Commits
+- Commits pequeños y con mensajes claros.  
+- Formato sugerido:
+  - `feat: agregar prueba de carga k6`
+  - `fix: variable de entorno faltante en task definition`
+  - `chore: actualizar dependencias frontend`
+
+### 🔹 Hotfixes
+Para solucionar errores críticos detectados en producción:
+- Crear rama `hotfix/<nombre>` desde `main`
+- Arreglar el problema
+- Hacer PR → merge a `main`
+- El pipeline desplegará automáticamente el fix en ECS
+
+### 🔹 Justificación de la decisión
+Se eligió **Trunk-Based Development** porque:
+- Minimiza conflictos de merge
+- Acelera la integración continua
+- Permite ciclos de entrega cortos y seguros
+- Se integra de forma natural con la automatización del pipeline Terraform + ECS
+- Es la estrategia recomendada para entornos orientados a DevOps, IaC y microservicios
+
+Esta estrategia cumple con los criterios de la rúbrica del obligatorio, demostrando:
+- Trabajo colaborativo
+- Flujo de desarrollo claro y reproducible
+- Uso consistente de PRs y control de versiones
