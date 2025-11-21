@@ -42,7 +42,6 @@ jobs:
           docker build -t ${{ secrets.ECR_INVENTORY_URL }}:$TAG ./inventory-service
           docker push ${{ secrets.ECR_INVENTORY_URL }}:$TAG
 
-
           # Guardamos las imágenes
           echo "API_IMAGE=${{ secrets.ECR_API_URL }}:$TAG" >> image-outputs.env
           echo "PRODUCT_IMAGE=${{ secrets.ECR_PRODUCT_URL }}:$TAG" >> image-outputs.env
@@ -84,16 +83,23 @@ jobs:
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
 
       - name: Terraform Init (ecs-task)
         working-directory: infra/ecs-task
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
         run: terraform init -input=false
 
       - name: Terraform Apply (ecs-task)
         working-directory: infra/ecs-task
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
         run: |
           terraform apply -auto-approve \
             -var environment=dev \
@@ -114,5 +120,6 @@ jobs:
 
       - name: Completed
         run: echo "🚀 Deploy via Terraform ejecutado correctamente."
+
 
 
