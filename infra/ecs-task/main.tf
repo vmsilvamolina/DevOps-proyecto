@@ -9,7 +9,7 @@ terraform {
   }
 
   backend "s3" {
-    bucket = "bucket-tf"
+    bucket = "bucket-stockwiz-tf"
     key    = "root/terraform.tfstate"
     region = "us-east-1"
   }
