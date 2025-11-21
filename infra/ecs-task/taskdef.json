@@ -1,0 +1,40 @@
+{
+  "family": "dev-core-task",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "containerDefinitions": [
+    {
+      "name": "api-gateway",
+      "image": "__API_IMAGE__",
+      "essential": true,
+      "portMappings": [{ "containerPort": 8080 }]
+    },
+    {
+      "name": "product",
+      "image": "__PRODUCT_IMAGE__",
+      "essential": true,
+      "portMappings": [{ "containerPort": 8081 }]
+    },
+    {
+      "name": "inventory",
+      "image": "__INVENTORY_IMAGE__",
+      "essential": true,
+      "portMappings": [{ "containerPort": 8082 }]
+    },
+    {
+      "name": "postgres",
+      "image": "postgres:15-alpine",
+      "essential": true,
+      "portMappings": [{ "containerPort": 5432 }]
+    },
+    {
+      "name": "redis",
+      "image": "redis:7-alpine",
+      "essential": true,
+      "portMappings": [{ "containerPort": 6379 }]
+    }
+  ]
+}
+
