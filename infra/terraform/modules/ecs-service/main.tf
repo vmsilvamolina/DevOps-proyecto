@@ -17,13 +17,18 @@ resource "aws_ecs_task_definition" "minimal" {
   }])
 }
 
-# ECS Service único usando ese task mínimo
+# ECS Service usando el task mínimo solo en el primer apply
 resource "aws_ecs_service" "this" {
   name            = "${var.environment}-ecs-service"
   cluster         = var.cluster_id
   task_definition = aws_ecs_task_definition.minimal.arn
   desired_count   = var.desired_count
   launch_type     = "FARGATE"
+
+  # Esto es la clave: Terraform NUNCA más toca la task_definition
+  lifecycle {
+    ignore_changes = [task_definition]
+  }
 
   network_configuration {
     subnets          = var.subnet_ids
