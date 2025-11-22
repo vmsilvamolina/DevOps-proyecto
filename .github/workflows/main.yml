@@ -40,5 +40,70 @@ jobs:
           docker push ${{ secrets.ECR_INVENTORY_URL }}:$TAG
 
           echo "API_IMAGE=${{ secrets.ECR_API_URL }}:$TAG" >> image-outputs.env
-          echo "PRODUCT_IMAGE=${{ secrets.ECR_PRODUCT_URL }}:$TAG" >> ima_
+          echo "PRODUCT_IMAGE=${{ secrets.ECR_PRODUCT_URL }}:$TAG" >> image-outputs.env
+          echo "INVENTORY_IMAGE=${{ secrets.ECR_INVENTORY_URL }}:$TAG" >> image-outputs.env
 
+      - name: Upload image outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-outputs
+          path: image-outputs.env
+
+  deploy:
+    name: Deploy ECS (JSON Task)
+    runs-on: ubuntu-latest
+    needs: build_and_push
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Download image outputs
+        uses: actions/download-artifact@v4
+        with:
+          name: image-outputs
+
+      - name: Load variables
+        run: |
+          source image-outputs.env
+          echo "API_IMAGE=$API_IMAGE" >> $GITHUB_ENV
+          echo "PRODUCT_IMAGE=$PRODUCT_IMAGE" >> $GITHUB_ENV
+          echo "INVENTORY_IMAGE=$INVENTORY_IMAGE" >> $GITHUB_ENV
+
+      - name: Generate updated TaskDefinition JSON
+        run: |
+          sed \
+            -e "s|\${APIGATEWAY_IMAGE}|${{ env.API_IMAGE }}|g" \
+            -e "s|\${PRODUCT_IMAGE}|${{ env.PRODUCT_IMAGE }}|g" \
+            -e "s|\${INVENTORY_IMAGE}|${{ env.INVENTORY_IMAGE }}|g" \
+            infra/ecs-task/task-definition.json > final-task.json
+
+      - name: Register new TaskDefinition in ECS
+        id: register
+        run: |
+          NEW_TASK_ARN=$(aws ecs register-task-definition \
+            --cli-input-json file://final-task.json \
+            --query "taskDefinition.taskDefinitionArn" \
+            --output text)
+          echo "NEW_TASK_ARN=$NEW_TASK_ARN" >> $GITHUB_ENV
+          echo "Nueva task registrada: $NEW_TASK_ARN"
+
+      - name: Update ECS Service with new Task Definition
+        run: |
+          aws ecs update-service \
+            --cluster ${{ secrets.ECS_CLUSTER }} \
+            --service ${{ secrets.ECS_SERVICE }} \
+            --task-definition ${{ env.NEW_TASK_ARN }} \
+            --desired-count 1 \
+            --force-new-deployment
+
+      - name: Completed
+        run: echo "🚀 Deploy ECS JSON ejecutado correctamente."
