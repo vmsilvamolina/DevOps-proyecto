@@ -5,35 +5,52 @@
   "cpu": "1024",
   "memory": "2048",
   "executionRoleArn": "arn:aws:iam::851725322802:role/LabRole",
-
   "containerDefinitions": [
     {
       "name": "api-gateway",
       "image": "${APIGATEWAY_IMAGE}",
       "essential": true,
-      "portMappings": [{ "containerPort": 8000 }]
+      "portMappings": [{ "containerPort": 8000 }],
+      "environment": [
+        { "name": "PRODUCT_SERVICE_URL", "value": "http://product:8001" },
+        { "name": "INVENTORY_SERVICE_URL", "value": "http://inventory:8002" },
+        { "name": "REDIS_URL", "value": "redis:6379" }
+      ]
     },
     {
       "name": "product",
       "image": "${PRODUCT_IMAGE}",
       "essential": true,
-      "portMappings": [{ "containerPort": 8001 }]
+      "portMappings": [{ "containerPort": 8001 }],
+      "environment": [
+        { "name": "DATABASE_URL", "value": "postgresql://admin:admin123@postgres:5432/microservices_db" },
+        { "name": "REDIS_URL", "value": "redis://redis:6379" }
+      ]
     },
     {
       "name": "inventory",
       "image": "${INVENTORY_IMAGE}",
       "essential": true,
-      "portMappings": [{ "containerPort": 8002 }]
+      "portMappings": [{ "containerPort": 8002 }],
+      "environment": [
+        { "name": "DATABASE_URL", "value": "postgres://admin:admin123@postgres:5432/microservices_db?sslmode=disable" },
+        { "name": "REDIS_URL", "value": "redis:6379" }
+      ]
     },
     {
       "name": "postgres",
-      "image": "postgres:16",
+      "image": "postgres:15-alpine",
       "essential": true,
-      "portMappings": [{ "containerPort": 5432 }]
+      "portMappings": [{ "containerPort": 5432 }],
+      "environment": [
+        { "name": "POSTGRES_USER", "value": "admin" },
+        { "name": "POSTGRES_PASSWORD", "value": "admin123" },
+        { "name": "POSTGRES_DB", "value": "microservices_db" }
+      ]
     },
     {
       "name": "redis",
-      "image": "redis:7",
+      "image": "redis:7-alpine",
       "essential": true,
       "portMappings": [{ "containerPort": 6379 }]
     }
