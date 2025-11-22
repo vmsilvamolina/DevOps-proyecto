@@ -3,8 +3,6 @@ variable "environment" { type = string }
 variable "cpu" { type = number }
 variable "memory" { type = number }
 
-variable "execution_role_arn" { type = string }
-
 variable "ecr_urls" {
   type = map(string)
 }
