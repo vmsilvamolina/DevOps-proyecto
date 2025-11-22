@@ -50,13 +50,21 @@ jobs:
           path: image-outputs.env
 
   deploy:
-    name: Deploy ECS using Terraform
+    name: Deploy ECS (JSON Task)
     runs-on: ubuntu-latest
     needs: build_and_push
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Download image outputs
         uses: actions/download-artifact@v4
@@ -67,46 +75,42 @@ jobs:
         id: vars
         run: |
           source image-outputs.env
+
           echo "api=$API_IMAGE" >> $GITHUB_ENV
           echo "product=$PRODUCT_IMAGE" >> $GITHUB_ENV
           echo "inventory=$INVENTORY_IMAGE" >> $GITHUB_ENV
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
+          # 🔍 LOGS PARA DEBUG (BORRAR SI TODO FUNCIONA BIEN)
+          echo "---- DEBUG: VARIABLES CARGADAS ----"
+          echo "API_IMAGE=$API_IMAGE"
+          echo "PRODUCT_IMAGE=$PRODUCT_IMAGE"
+          echo "INVENTORY_IMAGE=$INVENTORY_IMAGE"
+          echo "-----------------------------------"
 
-      # Terraform Init: necesita credenciales en env para S3 backend
-      - name: Terraform Init (ecs-task)
-        working-directory: infra/ecs-task
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
-        run: terraform init
-
-      # Terraform Apply: hereda credenciales
-      - name: Terraform Apply (ecs-task)
-        working-directory: infra/ecs-task
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+      - name: Generate updated TaskDefinition JSON
         run: |
-          terraform apply -auto-approve \
-            -var environment=dev \
-            -var cpu=256 \
-            -var memory=512 \
-            -var apigateway_port=8080 \
-            -var product_port=5000 \
-            -var inventory_port=4000 \
-            -var postgres_port=5432 \
-            -var redis_port=6379 \
-            -var postgres_image="postgres:latest" \
-            -var redis_image="redis:latest" \
-            -var ecr_urls='{ 
-                apigateway = "'$api'",
-                product    = "'$product'",
-                inventory  = "'$inventory'"
-              }'
+          sed \
+            -e "s|\${APIGATEWAY_IMAGE}|${{ env.api }}|g" \
+            -e "s|\${PRODUCT_IMAGE}|${{ env.product }}|g" \
+            -e "s|\${INVENTORY_IMAGE}|${{ env.inventory }}|g" \
+            infra/ecs-task/task-definition.json > final-task.json
+
+          # LOG TEMPORAL: mostrar el JSON final generado
+          echo "---- DEBUG: FINAL TASK JSON ----"
+          cat final-task.json
+          echo "--------------------------------"
+
+      - name: Register new TaskDefinition in ECS
+        run: |
+          aws ecs register-task-definition \
+            --cli-input-json file://final-task.json
+
+      - name: Force new ECS Deployment
+        run: |
+          aws ecs update-service \
+            --cluster ${{ secrets.ECS_CLUSTER }} \
+            --service ${{ secrets.ECS_SERVICE }} \
+            --force-new-deployment
 
       - name: Completed
-        run: echo "🚀 Deploy via Terraform ejecutado correctamente."
+        run: echo "🚀 Deploy ECS JSON ejecutado correctamente."
