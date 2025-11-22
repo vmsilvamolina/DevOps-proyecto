@@ -39,7 +39,7 @@ resource "aws_ecs_service" "this" {
   load_balancer {
     target_group_arn = var.target_group_arn
     container_name   = "api-gateway"
-    container_port   = 8080
+    container_port   = 8000
   }
 }
 
