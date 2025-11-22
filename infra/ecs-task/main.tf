@@ -31,7 +31,7 @@ resource "aws_ecs_task_definition" "this" {
   requires_compatibilities = ["FARGATE"]
   cpu                      = var.cpu
   memory                   = var.memory
-  execution_role_arn       = data.aws_iam_role.lab_role.arn
+  execution_role_arn       = data.aws_iam_role.lab-rol.arn
 
   container_definitions = jsonencode([
     {
