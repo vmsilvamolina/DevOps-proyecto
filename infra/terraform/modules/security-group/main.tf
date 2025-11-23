@@ -44,7 +44,7 @@ resource "aws_security_group" "ecs" {
     from_port       = var.api_gateway_port
     to_port         = var.api_gateway_port
     protocol        = "tcp"
-    security_groups = [var.alb_sg_id]  # <- variable pasada desde root/main
+    security_groups = [aws_security_group.alb.id]
   }
 
   egress {
