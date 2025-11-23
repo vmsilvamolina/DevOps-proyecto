@@ -41,7 +41,6 @@ module "security_group" {
   vpc_cidr        = var.vpc_cidr
   environment     = var.environment
   api_gateway_port = var.apigateway_port
-  alb_sg_id       = module.alb.alb_sg_id
 }
 
 # ALB (depends on security_group, uses the alb_sg_id)
