@@ -1,40 +1,3 @@
-resource "aws_security_group" "ecs" {
-  name        = "${var.environment}-ecs-sg"
-  description = "ECS service security group"
-  vpc_id      = var.vpc_id
-
-  # Inbound rules abiertas SOLO dentro de la VPC (todo el tráfico interno)
-  ingress {
-    description = "Allow all internal VPC traffic"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = [var.vpc_cidr]
-  }
-
-  # Inbound rule para que el ALB acceda al puerto 8000
-  ingress {
-    description     = "Allow traffic from ALB to ECS containers"
-    from_port       = 8000
-    to_port         = 8000
-    protocol        = "tcp"
-    security_groups = [aws_security_group.alb.id]  # referencia al SG del ALB
-  }
-
-  # Outbound: todo permitido
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name        = "${var.environment}-ecs-sg"
-    Environment = var.environment
-  }
-}
-
 resource "aws_security_group" "alb" {
   name        = "${var.environment}-alb-sg"
   description = "Security Group for Load Balancer"
@@ -57,6 +20,42 @@ resource "aws_security_group" "alb" {
 
   tags = {
     Name        = "${var.environment}-alb-sg"
+    Environment = var.environment
+  }
+}
+
+resource "aws_security_group" "ecs" {
+  name        = "${var.environment}-ecs-sg"
+  description = "ECS service security group"
+  vpc_id      = var.vpc_id
+
+  # Tráfico interno VPC
+  ingress {
+    description = "Allow all internal VPC traffic"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = [var.vpc_cidr]
+  }
+
+  # Tráfico ALB → ECS
+  ingress {
+    description     = "Allow traffic from ALB to ECS containers"
+    from_port       = var.api_gateway_port
+    to_port         = var.api_gateway_port
+    protocol        = "tcp"
+    security_groups = [var.alb_sg_id]  # <- variable pasada desde root/main
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name        = "${var.environment}-ecs-sg"
     Environment = var.environment
   }
 }
