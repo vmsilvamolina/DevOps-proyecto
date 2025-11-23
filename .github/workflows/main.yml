@@ -19,17 +19,18 @@ jobs:
           java-version: '17'
 
       - name: Check Java version
-        run: java -version   # Verifica que se esté usando Java 17
+        run: java -version
 
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
+      - name: Run SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v5.0.0
         with:
-          organization: ${{ secrets.SONAR_ORGANIZATION }}
-          token: ${{ secrets.SONAR_TOKEN }}
-          projectKey: ${{ secrets.SONAR_PROJECT_KEY }}
-          extraProperties: |
-            sonar.sources=api-gateway,product-service,inventory-service
-            sonar.host.url=https://sonarcloud.io
+          args: >
+            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
+            -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
+            -Dsonar.sources=api-gateway,product-service,inventory-service
+            -Dsonar.host.url=https://sonarcloud.io
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+            -X
 
   python_test:
     name: Python Health Test
@@ -52,5 +53,4 @@ jobs:
 
       - name: Run Product Service Tests (Verbose)
         working-directory: ./
-        run: |
-          pytest -v tests/test_product_service.py
+        run: pytest -v tests/test_product_service.py
