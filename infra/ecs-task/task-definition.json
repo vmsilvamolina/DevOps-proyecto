@@ -12,24 +12,19 @@
       "name": "postgres",
       "image": "postgres:15-alpine",
       "essential": true,
+      "cpu": 256,
+      "memory": 2048,
       "portMappings": [
-        { "containerPort": 5432 }
+        {
+          "containerPort": 5432,
+          "protocol": "tcp"
+        }
       ],
       "environment": [
         { "name": "POSTGRES_USER", "value": "admin" },
         { "name": "POSTGRES_PASSWORD", "value": "admin123" },
         { "name": "POSTGRES_DB", "value": "microservices_db" }
       ],
-      "healthCheck": {
-        "command": [
-          "CMD-SHELL",
-          "pg_isready -U admin -d microservices_db || exit 1"
-        ],
-        "interval": 10,
-        "timeout": 5,
-        "retries": 5,
-        "startPeriod": 10
-      },
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
@@ -44,19 +39,14 @@
       "name": "redis",
       "image": "redis:7-alpine",
       "essential": true,
+      "cpu": 128,
+      "memory": 1024,
       "portMappings": [
-        { "containerPort": 6379 }
+        {
+          "containerPort": 6379,
+          "protocol": "tcp"
+        }
       ],
-      "healthCheck": {
-        "command": [
-          "CMD-SHELL",
-          "redis-cli ping || exit 1"
-        ],
-        "interval": 10,
-        "timeout": 3,
-        "retries": 5,
-        "startPeriod": 5
-      },
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
@@ -71,27 +61,22 @@
       "name": "product",
       "image": "${PRODUCT_IMAGE}",
       "essential": true,
+      "cpu": 256,
+      "memory": 1024,
       "portMappings": [
-        { "containerPort": 8001 }
+        {
+          "containerPort": 8001,
+          "protocol": "tcp"
+        }
       ],
       "environment": [
-        { "name": "DATABASE_URL", "value": "postgresql://admin:admin123@127.0.0.1:5432/microservices_db" },
-        { "name": "REDIS_URL", "value": "redis://127.0.0.1:6379" }
+        { "name": "DATABASE_URL", "value": "postgresql://admin:admin123@postgres:5432/microservices_db" },
+        { "name": "REDIS_URL", "value": "redis://redis:6379" }
       ],
       "dependsOn": [
-        { "containerName": "postgres", "condition": "HEALTHY" },
-        { "containerName": "redis",  "condition": "HEALTHY" }
+        { "containerName": "postgres", "condition": "START" },
+        { "containerName": "redis", "condition": "START" }
       ],
-      "healthCheck": {
-        "command": [
-          "CMD-SHELL",
-          "echo > /dev/tcp/127.0.0.1/8001 || exit 1"
-        ],
-        "interval": 10,
-        "timeout": 5,
-        "retries": 5,
-        "startPeriod": 15
-      },
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
@@ -106,27 +91,22 @@
       "name": "inventory",
       "image": "${INVENTORY_IMAGE}",
       "essential": true,
+      "cpu": 256,
+      "memory": 1024,
       "portMappings": [
-        { "containerPort": 8002 }
+        {
+          "containerPort": 8002,
+          "protocol": "tcp"
+        }
       ],
       "environment": [
-        { "name": "DATABASE_URL", "value": "postgres://admin:admin123@127.0.0.1:5432/microservices_db?sslmode=disable" },
-        { "name": "REDIS_URL", "value": "redis://127.0.0.1:6379" }
+        { "name": "DATABASE_URL", "value": "postgres://admin:admin123@postgres:5432/microservices_db?sslmode=disable" },
+        { "name": "REDIS_URL", "value": "redis:6379" }
       ],
       "dependsOn": [
-        { "containerName": "postgres", "condition": "HEALTHY" },
-        { "containerName": "redis",  "condition": "HEALTHY" }
+        { "containerName": "postgres", "condition": "START" },
+        { "containerName": "redis", "condition": "START" }
       ],
-      "healthCheck": {
-        "command": [
-          "CMD-SHELL",
-          "echo > /dev/tcp/127.0.0.1/8002 || exit 1"
-        ],
-        "interval": 10,
-        "timeout": 5,
-        "retries": 5,
-        "startPeriod": 15
-      },
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
@@ -141,28 +121,23 @@
       "name": "api-gateway",
       "image": "${APIGATEWAY_IMAGE}",
       "essential": true,
+      "cpu": 128,
+      "memory": 1024,
       "portMappings": [
-        { "containerPort": 8000 }
+        {
+          "containerPort": 8000,
+          "protocol": "tcp"
+        }
       ],
       "environment": [
-        { "name": "PRODUCT_SERVICE_URL", "value": "http://127.0.0.1:8001" },
-        { "name": "INVENTORY_SERVICE_URL", "value": "http://127.0.0.1:8002" },
-        { "name": "REDIS_URL", "value": "redis://127.0.0.1:6379" }
+        { "name": "PRODUCT_SERVICE_URL", "value": "http://product:8001" },
+        { "name": "INVENTORY_SERVICE_URL", "value": "http://inventory:8002" },
+        { "name": "REDIS_URL", "value": "redis:6379" }
       ],
       "dependsOn": [
-        { "containerName": "product",  "condition": "HEALTHY" },
-        { "containerName": "inventory","condition": "HEALTHY" }
+        { "containerName": "product", "condition": "START" },
+        { "containerName": "inventory", "condition": "START" }
       ],
-      "healthCheck": {
-        "command": [
-          "CMD-SHELL",
-          "echo > /dev/tcp/127.0.0.1/8000 || exit 1"
-        ],
-        "interval": 10,
-        "timeout": 5,
-        "retries": 5,
-        "startPeriod": 20
-      },
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
