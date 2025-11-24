@@ -41,21 +41,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-
-      - name: Create virtual environment
+      - name: Install dependencies & run tests
         run: |
-          python -m venv venv
-          source venv/bin/activate
           python -m pip install --upgrade pip
-          python -m pip install -r product-service/requirements.txt
-        shell: bash
-
-      - name: Run Product Service Tests (Verbose)
-        run: |
-          source venv/bin/activate
+          pip install -r product-service/requirements.txt
           python -m pytest -v tests/test_product_service.py
-        shell: bash
