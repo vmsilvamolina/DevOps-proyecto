@@ -1,0 +1,39 @@
+{
+  "info": {
+    "name": "Health Test",
+    "_postman_id": "abc123-health-test",
+    "description": "Prueba funcional mínima del endpoint /health.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "GET /health",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{BASE_URL}}/health",
+          "host": ["{{BASE_URL}}"],
+          "path": ["health"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response has correct fields', function () {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.status).to.eql('healthy');",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
