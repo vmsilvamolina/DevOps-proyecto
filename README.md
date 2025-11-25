@@ -1,114 +1,281 @@
-# StockWiz — Proyecto DevOps
+README.md – Proyecto DevOps (StockWiz)
+🚀 StockWiz – Plataforma de Microservicios con CI/CD, IaC y Observabilidad
 
-> Repositorio para el entregable del Obligatorio DevOps (Agosto 2025).  
-> Basado en el enunciado oficial del curso (ver PDF entregado por la cátedra). :contentReference[oaicite:1]{index=1}
+Este proyecto implementa una arquitectura de microservicios en AWS usando ECS Fargate, Terraform, CI/CD con GitHub Actions, testing automático, análisis estático, y Docker.
 
----
+Estructura orientada al Obligatorio DevOps – Agosto 2025, cumpliendo cada uno de los puntos exigidos en la rúbrica.
 
-## Resumen
-StockWiz es la aplicación base entregada para el proyecto. Este repositorio contiene:
-- Código de las aplicaciones (backend / frontend).
-- Dockerfiles para containerización.
-- Terraform para IaC (infraestructura en AWS).
-- Workflows de GitHub Actions que realizan `plan` / `apply` de Terraform y despliegue.
-- Scripts de testing y ejemplos de observabilidad.
+📁 1. Estructura del Proyecto
+DevOps-proyecto
+├── api-gateway
+│   ├── Dockerfile
+│   ├── main.go
+│   └── static/index.html
+│
+├── inventory-service
+│   ├── Dockerfile
+│   ├── main.go
+│   └── go.mod / go.sum
+│
+├── product-service
+│   ├── Dockerfile
+│   ├── main.py
+│   └── requirements.txt
+│
+├── tests
+│   ├── test_postman_collection.json
+│   └── test_product_service.py
+│
+├── infra
+│   ├── ecs-task
+│   │   ├── task-definition.json
+│   │   ├── main.tf
+│   └── terraform
+│       ├── main.tf
+│       ├── dev.tfvars
+│       ├── modules/
+│       │   ├── vpc
+│       │   ├── ecs-cluster
+│       │   ├── ecs-service
+│       │   ├── ecr
+│       │   └── alb
+│       ├── variables.tf
+│       └── outputs.tf
+│
+├── docker-compose.yml
+└── .github/workflows
+    ├── Terraform-Apply.yml
+    ├── Terraform-destroy.yml
+    └── main.yml (Tests & Sonar)
+⚙️ 2. Requisitos Previos
+Herramientas locales
 
-> **Objetivo:** tener un pipeline totalmente automatizado que, al hacer `push` / `merge` a `main`, aplique la infraestructura con Terraform y despliegue la aplicación en AWS ECS.
+Docker
 
----
+Terraform 1.13.4
 
-## Índice
-1. Requisitos previos  
-2. Estructura del repositorio  
-3. Variables de entorno y `.env.example`  
-4. Instrucciones locales (build & run con Docker)  
-5. Terraform — inicializar y aplicar  
-6. GitHub Actions — pipelines (apply / destroy)  
-7. Despliegue en AWS ECS (build, push a ECR, actualizar servicio)  
-8. Observabilidad y alertas (sugerencia)  
-9. Testing (sugerencia e instrucciones)  
-10. Rollback y recuperación  
-11. Troubleshooting  
-12. Checklist para completar (placeholders)  
-13. Estrategia de Ramas (Branching Strategy)
-14. Contacto
+AWS CLI
 
----
+Go
 
-## 1) Requisitos previos
-- Git
-- Docker (local)
-- AWS CLI (configurado si vas a ejecutar comandos aws localmente)
-- Terraform (v1.X+)
-- Node / Java / .NET según el stack de la app (si vas a ejecutar localmente)
-- `aws-cdk` no requerido a menos que lo uses
-- Acceso a GitHub (repo) y permisos para crear/usar secrets
+Python 3.11
 
----
+Git
 
-## 2) Estructura recomendada del repo
-> Si la estructura difiere, actualizá las rutas en los pasos de abajo.
+Secrets requeridos en GitHub Actions
+Secret	Uso
+AWS_ACCESS_KEY_ID	Acceso AWS
+AWS_SECRET_ACCESS_KEY	Acceso AWS
+AWS_SESSION_TOKEN	STS (opcional)
+AWS_REGION	Región AWS
+SONAR_PROJECT_KEY	SonarCloud
+SONAR_ORGANIZATION	SonarCloud
+SONAR_TOKEN	SonarCloud
+🛠️ 3. Ejecución Local
+Levantar todos los servicios
+docker-compose up --build
 
-## 13) Estrategia de Ramas (Branching Strategy)
+Genera y ejecuta los tres microservicios en red local.
 
-Para este proyecto se implementó una estrategia **Trunk-Based Development**, adaptada al flujo de trabajo del equipo y a los requerimientos del obligatorio. Esta estrategia permite ciclos de integración más rápidos, mayor visibilidad del trabajo en curso y despliegues automatizados basados en la rama principal.
+Build manual de imágenes
+docker build -t api-gateway:local ./api-gateway
+docker build -t inventory-service:local ./inventory-service
+docker build -t product-service:local ./product-service
+🚢 4. Despliegue Manual con Terraform
+Inicializar Terraform
+cd infra/terraform
+terraform init
+Seleccionar workspace
+terraform workspace select dev || terraform workspace new dev
+Plan + Apply
+terraform plan -var-file="dev.tfvars" -out=tfplan
+terraform apply -auto-approve tfplan
 
-### 🔹 Ramas principales
-- **main**  
-  Contiene el código estable y listo para despliegue.  
-  Cada integración a `main` dispara el pipeline de GitHub Actions que ejecuta:
-  - Validación de Terraform (fmt / validate)
-  - Terraform Plan + Apply
-  - Construcción y publicación de imágenes en ECR
-  - Actualización del servicio ECS
+Esto crea:
 
-### 🔹 Ramas de desarrollo
-- **feature/\***  
-  Cada nueva funcionalidad, fix o mejora se desarrolla en una rama temporal.  
-  Ejemplos:
-  - `feature/agregar-test-k6`
-  - `feature/dockerfile-backend-opt`
+VPC
 
-  Estas ramas:
-  1. Se crean desde `main`
-  2. Se mantienen pequeñas y de corta duración
-  3. Terminan en un **Pull Request** (PR) hacia `main`
+Security Groups
 
-### 🔹 Pull Requests (PR)
-Los PRs son obligatorios para integrar cambios en `main`.  
-Cada PR debe incluir:
-- Descripción del cambio
-- Qué componentes modifica (Dockerfile, Terraform, app, etc.)
-- Checklist de pruebas locales realizadas
-- Revisión de al menos un miembro del equipo
+ALB
 
-El merge solo se realiza cuando:
-1. El PR está aprobado  
-2. Los checks automáticos pasan (lint, build, validación de Terraform)
+ECS Cluster + ECS Service
 
-### 🔹 Política de Commits
-- Commits pequeños y con mensajes claros.  
-- Formato sugerido:
-  - `feat: agregar prueba de carga k6`
-  - `fix: variable de entorno faltante en task definition`
-  - `chore: actualizar dependencias frontend`
+Repositorios ECR
 
-### 🔹 Hotfixes
-Para solucionar errores críticos detectados en producción:
-- Crear rama `hotfix/<nombre>` desde `main`
-- Arreglar el problema
-- Hacer PR → merge a `main`
-- El pipeline desplegará automáticamente el fix en ECS
+Roles IAM
 
-### 🔹 Justificación de la decisión
-Se eligió **Trunk-Based Development** porque:
-- Minimiza conflictos de merge
-- Acelera la integración continua
-- Permite ciclos de entrega cortos y seguros
-- Se integra de forma natural con la automatización del pipeline Terraform + ECS
-- Es la estrategia recomendada para entornos orientados a DevOps, IaC y microservicios
+Task Definition
 
-Esta estrategia cumple con los criterios de la rúbrica del obligatorio, demostrando:
-- Trabajo colaborativo
-- Flujo de desarrollo claro y reproducible
-- Uso consistente de PRs y control de versiones
+📦 5. Subida Manual de Imágenes a ECR
+Login
+aws ecr get-login-password --region $AWS_REGION | \
+ docker login --username AWS --password-stdin <ECR_REPO_URI>
+Tag + push
+docker tag api-gateway:local <ECR_REPO_URI>/api-gateway:latest
+docker push <ECR_REPO_URI>/api-gateway:latest
+
+Repetir para los demás servicios.
+
+🤖 6. CI/CD – Pipelines Automáticos (GitHub Actions)
+
+Ubicados en:
+
+.github/workflows/
+▶️ 1. Terraform-Apply.yml (Despliegue Infraestructura)
+
+Ejecuta:
+
+Checkout
+
+Setup Terraform
+
+Credenciales AWS
+
+Terraform Init
+
+(Recomendado) Terraform Format & Validate
+
+Workspace según environment
+
+Terraform Plan
+
+Terraform Apply automatico
+
+Se ejecuta mediante:
+
+workflow_dispatch → seleccionar environment (dev/staging/prod)
+🧨 2. Terraform-destroy.yml (Elimina Infraestructura)
+
+Solo para ambientes de testing. Ejecuta terraform destroy -auto-approve con el .tfvars correspondiente.
+
+🧪 3. main.yml (Test & Sonar)
+
+Pipeline de calidad. Incluye:
+
+Análisis SonarCloud
+
+Tests del product-service (pytest)
+
+Preparación Java 17 y Python 3.11
+
+Este pipeline actúa como Quality Gate antes del despliegue.
+
+🌿 7. Estrategia de Ramas (Branching Strategy)
+
+Se implementó Trunk-Based Development.
+
+Ramas principales
+
+main → Código estable + despliegue automático vía pipeline Terraform Apply
+
+Ramas feature
+
+feature/<nombre>
+
+Pequeñas, de corta duración
+
+Siempre integradas mediante PR
+
+Política de PR
+
+Revisión obligatoria
+
+Tests deben pasar
+
+SonarCloud debe aprobar Quality Gate
+
+Hotfixes
+
+hotfix/<nombre> desde main
+
+Merge rápido + despliegue automático
+
+Justificación:
+
+Minimiza conflictos
+
+Integración continua real
+
+Reduce tiempo de entrega
+
+Facilita despliegues automatizados
+
+🚀 8. Despliegue Automático (CI/CD)
+
+Desde GitHub Actions → Terraform Deploy → seleccionar environment:
+
+dev | staging | prod
+
+El pipeline aplica:
+
+Infraestructura completa
+
+Task Definition actualizada
+
+ECS Service con nueva versión
+
+🔁 9. Rollback
+Método 1: Cambiar tag en tfvars
+image_tag = "tag_anterior"
+
+Luego:
+
+terraform apply -auto-approve
+Método 2: Forzar redeploy del ECS service
+aws ecs update-service \
+  --cluster stockwiz-cluster \
+  --service stockwiz-service \
+  --force-new-deployment
+📊 10. Observabilidad (CloudWatch)
+
+Se recomienda:
+
+Logs por contenedor ECS
+
+Métricas CPU/Memory
+
+Dashboard con:
+
+CPU ECS
+
+Memoria
+
+Requests
+
+Errores 4xx/5xx
+
+Alarmas:
+
+CPU > 80%
+
+Error rate > 5%
+
+🧪 11. Testing
+Tests unitarios / health check
+
+En:
+
+tests/test_product_service.py
+
+Ejecutados automáticamente en main.yml.
+
+Tests Postman
+
+Colección:
+
+tests/test_postman_collection.json
+🧱 12. Problemas Comunes (Troubleshooting)
+Problema	Causa	Solución
+ECS task no arranca	Variables faltantes	Revisar CloudWatch Logs
+Imagen no encontrada	Push falló	Ver workflow build/push
+Terraform lock	Lock en DynamoDB	Quitar lock manual
+ALB devuelve 503	Target no pasa healthcheck	Revisar puerto/container
+📝 13. Checklist Final
+
+
+
+
+👥 14. Autores
+
+Equipo DevOps — ORT ATI 2025
