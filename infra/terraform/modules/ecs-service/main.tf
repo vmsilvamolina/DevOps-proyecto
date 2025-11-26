@@ -58,7 +58,7 @@
 
     {
       "name": "product",
-      "image": "${PRODUCT_IMAGE}",
+      "image": "${ECR_PRODUCT_URL}:latest",
       "essential": true,
       "portMappings": [
         {
@@ -87,7 +87,7 @@
 
     {
       "name": "inventory",
-      "image": "${INVENTORY_IMAGE}",
+      "image": "${ECR_INVENTORY_URL}:latest",
       "essential": true,
       "portMappings": [
         {
@@ -116,7 +116,7 @@
 
     {
       "name": "api-gateway",
-      "image": "${API_IMAGE}",
+      "image": "${ECR_API_URL}:latest",
       "essential": true,
       "portMappings": [
         {
@@ -152,7 +152,7 @@
 resource "aws_ecs_service" "this" {
   name            = "${var.environment}-ecs-service"
   cluster         = var.cluster_id
-  task_definition = task_definition = aws_ecs_task_definition.initial.arn
+  task_definition = task_definition = aws_ecs_task_definition.dev-core-task.arn
   desired_count   = var.desired_count
   launch_type     = "FARGATE"
 
