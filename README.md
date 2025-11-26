@@ -7,7 +7,7 @@ StockWiz es un sistema compuesto por múltiples microservicios construido para d
 
 Este repositorio fue diseñado para cumplir con los requerimientos del Obligatorio de DevOps – Agosto 2025 (ORT ATI), mostrando un flujo completo de trabajo desde el desarrollo local hasta el despliegue automatizado en AWS.
 
-🎯 Objetivos del Proyecto
+# *🎯 Objetivos del Proyecto*
 
 Diseñar e implementar una arquitectura basada en microservicios.
 
@@ -21,7 +21,7 @@ Monitorear servicios usando CloudWatch.
 
 Mantener buenas prácticas: versionado, seguridad, calidad y automatización.
 
-✨ Componentes Principales
+# *✨ Componentes Principales*
 
 3 microservicios (Go + Python) + API Gateway.
 
@@ -39,7 +39,7 @@ Tests automáticos con pytest e integración Postman.
 
 GitHub Actions para automatizar construcción, análisis y despliegue.
 
-🧩 Flujo General de DevOps
+# *🧩 Flujo General de DevOps*
 
 El desarrollador crea una rama feature → código nuevo.
 
@@ -53,7 +53,7 @@ ECS toma imágenes nuevas desde ECR y crea un nuevo deployment.
 
 CloudWatch captura logs y métricas en tiempo real.
 
-📦 Infraestructura Provisionada Automáticamente
+# *📦 Infraestructura Provisionada Automáticamente*
 
 Red: VPC, subnets, route tables.
 
