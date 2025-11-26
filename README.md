@@ -441,6 +441,7 @@ Revisar puerto/container
 ----------
 
 # 📝 13. Checklist Final
+<img width="451" height="397" alt="image" src="https://github.com/user-attachments/assets/78edd570-df2d-4406-b188-72554ef9c871" />
 
 -     
     
