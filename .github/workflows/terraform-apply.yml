@@ -17,18 +17,16 @@ jobs:
   terraform:
     name: Terraform Apply
     runs-on: ubuntu-latest
+
     steps:
-      # Obtener el código
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Configurar Terraform (misma versión que tu local)
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.13.4
 
-      # Configurar credenciales de AWS
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -37,42 +35,52 @@ jobs:
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      # Inicializar Terraform
       - name: Terraform Init
         working-directory: infra/terraform
         run: terraform init -input=false
 
-      # Crear plan
       - name: Terraform Plan
         working-directory: infra/terraform
         run: terraform plan -var-file="${{ github.event.inputs.environment }}.tfvars" -out=tfplan
 
-      # Aplicar plan automáticamente
       - name: Terraform Apply
         working-directory: infra/terraform
         run: terraform apply -auto-approve tfplan
 
       # ===================================================
-      # OBTENER OUTPUTS Y ACTUALIZAR SECRETS DE GITHUB
+      # OBTENER OUTPUTS Y ACTUALIZAR SECRETS
       # ===================================================
       - name: Exportar ECR URLs a secretos de GitHub
         working-directory: infra/terraform
         run: |
-          # Obtener outputs de Terraform en JSON
-          OUTPUTS=$(terraform output -json)
+          echo "Obteniendo outputs de Terraform..."
 
-          # Extraer cada URL
-          API=$(echo $OUTPUTS      | jq -r '.ecr_urls.value.apigateway')
-          PRODUCT=$(echo $OUTPUTS  | jq -r '.ecr_urls.value.product')
-          INVENTORY=$(echo $OUTPUTS| jq -r '.ecr_urls.value.inventory')
+          OUTPUTS=$(terraform output -json 2>/dev/null)
 
-          echo "URL API Gateway: $API"
-          echo "URL Product: $PRODUCT"
-          echo "URL Inventory: $INVENTORY"
+          if [ -z "$OUTPUTS" ]; then
+            echo "❌ ERROR: Terraform no devolvió outputs válidos"
+            exit 1
+          fi
 
-          # Actualizar secretos de GitHub usando tu PAT
-          gh secret set ECR_API_URL --body "$API"
-          gh secret set ECR_PRODUCT_URL --body "$PRODUCT"
-          gh secret set ECR_INVENTORY_URL --body "$INVENTORY"
+          # Extraer URLs correctas
+          API=$(echo "$OUTPUTS"      | jq -r '.ecr_urls.value.apigateway')
+          PRODUCT=$(echo "$OUTPUTS"  | jq -r '.ecr_urls.value.product')
+          INVENTORY=$(echo "$OUTPUTS"| jq -r '.ecr_urls.value.inventory')
+
+          echo "API: $API"
+          echo "PRODUCT: $PRODUCT"
+          echo "INVENTORY: $INVENTORY"
+
+          if [ "$API" == "null" ] || [ "$PRODUCT" == "null" ] || [ "$INVENTORY" == "null" ]; then
+            echo "❌ ERROR: Alguno de los outputs es null. Revisar nombres."
+            exit 1
+          fi
+
+          echo "Actualizando secretos..."
+
+          gh secret set ECR_API_URL        --body "$API"
+          gh secret set ECR_PRODUCT_URL    --body "$PRODUCT"
+          gh secret set ECR_INVENTORY_URL  --body "$INVENTORY"
+
         env:
           GH_TOKEN: ${{ secrets.REPO_ADMIN_PAT }}
