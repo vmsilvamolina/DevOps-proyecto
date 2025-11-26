@@ -159,8 +159,8 @@ resource "aws_ecs_task_definition" "dev-core-task" {
       }
 
       dependsOn = [
-        { containerName = "postgres",  condition = "HEALTHY" },
-        { containerName = "redis",     condition = "HEALTHY" },
+        { containerName = "postgres",  condition = "START" },
+        { containerName = "redis",     condition = "START" },
         { containerName = "product",   condition = "START" },
         { containerName = "inventory", condition = "START" }
       ]
