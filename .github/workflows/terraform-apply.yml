@@ -48,36 +48,27 @@ jobs:
         run: terraform apply -auto-approve tfplan
 
       # ===================================================
-      # OBTENER OUTPUTS Y ACTUALIZAR SECRETS
+      # OBTENER OUTPUTS INDIVIDUALES (ecr_api_url, ecr_product_url, ecr_inventory_url)
       # ===================================================
       - name: Exportar ECR URLs a secretos de GitHub
         working-directory: infra/terraform
         run: |
-          echo "Obteniendo outputs de Terraform..."
+          echo "Obteniendo outputs individuales con terraform -raw..."
 
-          OUTPUTS=$(terraform output -json 2>/dev/null)
+          # Leer outputs individuales (no JSON, sin jq)
+          API=$(terraform output -raw ecr_api_url 2>/dev/null || true)
+          PRODUCT=$(terraform output -raw ecr_product_url 2>/dev/null || true)
+          INVENTORY=$(terraform output -raw ecr_inventory_url 2>/dev/null || true)
 
-          if [ -z "$OUTPUTS" ]; then
-            echo "❌ ERROR: Terraform no devolvió outputs válidos"
-            exit 1
-          fi
+          # Imprimir para debug (ver qué trae)
+          echo "=== DEBUG: ECR outputs (raw) ==="
+          echo "API:       '$API'"
+          echo "PRODUCT:   '$PRODUCT'"
+          echo "INVENTORY: '$INVENTORY'"
+          echo "================================"
 
-          # Extraer URLs correctas
-          API=$(echo "$OUTPUTS"      | jq -r '.ecr_urls.value.apigateway')
-          PRODUCT=$(echo "$OUTPUTS"  | jq -r '.ecr_urls.value.product')
-          INVENTORY=$(echo "$OUTPUTS"| jq -r '.ecr_urls.value.inventory')
-
-          echo "API: $API"
-          echo "PRODUCT: $PRODUCT"
-          echo "INVENTORY: $INVENTORY"
-
-          if [ "$API" == "null" ] || [ "$PRODUCT" == "null" ] || [ "$INVENTORY" == "null" ]; then
-            echo "❌ ERROR: Alguno de los outputs es null. Revisar nombres."
-            exit 1
-          fi
-
-          echo "Actualizando secretos..."
-
+          # Actualizar secretos de GitHub (usa gh CLI y el PAT que guardaste en REPO_ADMIN_PAT)
+          echo "Actualizando secretos de GitHub..."
           gh secret set ECR_API_URL        --body "$API"
           gh secret set ECR_PRODUCT_URL    --body "$PRODUCT"
           gh secret set ECR_INVENTORY_URL  --body "$INVENTORY"
