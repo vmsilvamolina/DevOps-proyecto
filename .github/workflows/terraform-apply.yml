@@ -1,76 +1,74 @@
 name: Terraform Deploy
 
 on:
-workflow_dispatch:
-inputs:
-environment:
-description: 'El entorno a desplegar'
-required: true
-default: 'dev'
-type: choice
-options:
-- dev
-- staging
-- prod
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'El entorno a desplegar'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
 
 jobs:
-terraform:
-name: Terraform Apply
-runs-on: ubuntu-latest
+  terraform:
+    name: Terraform Apply
+    runs-on: ubuntu-latest
 
-```
-steps:
-  - name: Checkout code
-    uses: actions/checkout@v3
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-  - name: Set up Terraform
-    uses: hashicorp/setup-terraform@v2
-    with:
-      terraform_version: 1.13.4
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.13.4
 
-  - name: Configure AWS credentials
-    uses: aws-actions/configure-aws-credentials@v2
-    with:
-      aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
-      aws-region: ${{ secrets.AWS_REGION }}
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-  - name: Terraform Init
-    working-directory: infra/terraform
-    run: terraform init -input=false
+      - name: Terraform Init
+        working-directory: infra/terraform
+        run: terraform init -input=false
 
-  - name: Terraform Plan
-    working-directory: infra/terraform
-    run: terraform plan -var-file="${{ github.event.inputs.environment }}.tfvars" -out=tfplan
+      - name: Terraform Plan
+        working-directory: infra/terraform
+        run: terraform plan -var-file="${{ github.event.inputs.environment }}.tfvars" -out=tfplan
 
-  - name: Terraform Apply
-    working-directory: infra/terraform
-    run: terraform apply -auto-approve tfplan
+      - name: Terraform Apply
+        working-directory: infra/terraform
+        run: terraform apply -auto-approve tfplan
 
-  # ===================================================
-  # EXPORTAR OUTPUTS ECR LIMPIOS (USANDO GREP)
-  # ===================================================
-  - name: Exportar ECR URLs a secretos de GitHub
-    working-directory: infra/terraform
-    run: |
-      echo "Obteniendo outputs individuales (limpio con grep)..."
+      # ===================================================
+      # EXPORTAR OUTPUTS ECR LIMPIOS (FILTRANDO SOLO URL)
+      # ===================================================
+      - name: Exportar ECR URLs a secretos de GitHub
+        working-directory: infra/terraform
+        run: |
+          echo "Obteniendo outputs individuales (limpio con grep)..."
 
-      API=$(terraform output ecr_api_url | grep -oE "[0-9]+\.dkr\.ecr\.[^ ]+")
-      PRODUCT=$(terraform output ecr_product_url | grep -oE "[0-9]+\.dkr\.ecr\.[^ ]+")
-      INVENTORY=$(terraform output ecr_inventory_url | grep -oE "[0-9]+\.dkr\.ecr\.[^ ]+")
+          API=$(terraform output ecr_api_url | grep -oE "[0-9]+\.dkr\.ecr\.[^ ]+")
+          PRODUCT=$(terraform output ecr_product_url | grep -oE "[0-9]+\.dkr\.ecr\.[^ ]+")
+          INVENTORY=$(terraform output ecr_inventory_url | grep -oE "[0-9]+\.dkr\.ecr\.[^ ]+")
 
-      echo "=== DEBUG CLEAN ==="
-      echo "API: '$API'"
-      echo "PRODUCT: '$PRODUCT'"
-      echo "INVENTORY: '$INVENTORY'"
-      echo "==================="
+          echo "=== DEBUG CLEAN ==="
+          echo "API: '$API'"
+          echo "PRODUCT: '$PRODUCT'"
+          echo "INVENTORY: '$INVENTORY'"
+          echo "==================="
 
-      echo "Actualizando secretos de GitHub..."
-      gh secret set ECR_API_URL       --body "$API"
-      gh secret set ECR_PRODUCT_URL   --body "$PRODUCT"
-      gh secret set ECR_INVENTORY_URL --body "$INVENTORY"
+          echo "Actualizando secretos de GitHub..."
+          gh secret set ECR_API_URL       --body "$API"
+          gh secret set ECR_PRODUCT_URL   --body "$PRODUCT"
+          gh secret set ECR_INVENTORY_URL --body "$INVENTORY"
 
-    env:
-      GH_TOKEN: ${{ secrets.REPO_ADMIN_PAT }}
-```
+        env:
+          GH_TOKEN: ${{ secrets.REPO_ADMIN_PAT }}
