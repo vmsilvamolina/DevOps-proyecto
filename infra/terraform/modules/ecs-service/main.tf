@@ -1,4 +1,6 @@
-# Task Definition en Terraform SIN jsonencode
+# --------------------------------------------------------------------
+# TASK DEFINITION (CORRECTO PARA TERRAFORM)
+# --------------------------------------------------------------------
 resource "aws_ecs_task_definition" "dev-core-task" {
   family                   = "dev-core-task"
   network_mode             = "awsvpc"
@@ -7,7 +9,7 @@ resource "aws_ecs_task_definition" "dev-core-task" {
   memory                   = "8192"
   execution_role_arn       = "arn:aws:iam::851725322802:role/LabRole"
 
-  container_definitions = [
+  container_definitions = jsonencode([
     {
       name      = "postgres"
       image     = "postgres:15-alpine"
@@ -63,8 +65,8 @@ resource "aws_ecs_task_definition" "dev-core-task" {
     },
 
     {
-      name      = "product"
-      image     = "${var.ecr_product_url}:latest"
+      name  = "product"
+      image = "${var.ecr_product_url}:latest"
       essential = true
 
       portMappings = [
@@ -96,8 +98,8 @@ resource "aws_ecs_task_definition" "dev-core-task" {
     },
 
     {
-      name      = "inventory"
-      image     = "${var.ecr_inventory_url}:latest"
+      name  = "inventory"
+      image = "${var.ecr_inventory_url}:latest"
       essential = true
 
       portMappings = [
@@ -129,8 +131,8 @@ resource "aws_ecs_task_definition" "dev-core-task" {
     },
 
     {
-      name      = "api-gateway"
-      image     = "${var.ecr_api_url}:latest"
+      name  = "api-gateway"
+      image = "${var.ecr_api_url}:latest"
       essential = true
 
       portMappings = [
@@ -163,10 +165,12 @@ resource "aws_ecs_task_definition" "dev-core-task" {
         { containerName = "inventory", condition = "START" }
       ]
     }
-  ]
+  ])
 }
 
-# ECS Service
+# --------------------------------------------------------------------
+# ECS SERVICE
+# --------------------------------------------------------------------
 resource "aws_ecs_service" "this" {
   name            = "${var.environment}-ecs-service"
   cluster         = var.cluster_id
