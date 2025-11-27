@@ -6,7 +6,6 @@
   "memory": "8192",
   "executionRoleArn": "arn:aws:iam::851725322802:role/LabRole",
   "containerDefinitions": [
-
     {
       "name": "postgres",
       "image": "postgres:15-alpine",
@@ -32,7 +31,6 @@
         }
       }
     },
-
     {
       "name": "redis",
       "image": "redis:7-alpine",
@@ -54,7 +52,6 @@
         }
       }
     },
-
     {
       "name": "product",
       "image": "${PRODUCT_IMAGE}",
@@ -83,7 +80,6 @@
         {"containerName": "redis", "condition": "START"}
       ]
     },
-
     {
       "name": "inventory",
       "image": "${INVENTORY_IMAGE}",
@@ -112,10 +108,9 @@
         {"containerName": "redis", "condition": "START"}
       ]
     },
-
     {
       "name": "api-gateway",
-      "image": "${API_IMAGE}",
+      "image": "${APIGATEWAY_IMAGE}",
       "essential": true,
       "portMappings": [
         {
