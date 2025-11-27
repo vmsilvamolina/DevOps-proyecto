@@ -84,8 +84,8 @@
         { "containerPort": 8001, "hostPort": 8001, "protocol": "tcp" }
       ],
       "environment": [
-        { "name": "DATABASE_URL", "value": "postgresql://admin:admin123@postgres:5432/microservices_db?sslmode=disable" },
-        { "name": "REDIS_URL", "value": "redis://redis:6379" }
+        { "name": "DATABASE_URL", "value": "postgresql://admin:admin123@localhost:5432/microservices_db" },
+        { "name": "REDIS_URL", "value": "localhost:6379" }
       ],
       "dependsOn": [
         { "containerName": "postgres", "condition": "HEALTHY" },
@@ -109,8 +109,8 @@
         { "containerPort": 8002, "hostPort": 8002, "protocol": "tcp" }
       ],
       "environment": [
-        { "name": "DATABASE_URL", "value": "postgresql://admin:admin123@postgres:5432/microservices_db?sslmode=disable" },
-        { "name": "REDIS_URL", "value": "redis://redis:6379" }
+        { "name": "DATABASE_URL", "value": "postgresql://admin:admin123@localhost:5432/microservices_db" },
+        { "name": "REDIS_URL", "value": "localhost:6379" }
       ],
       "dependsOn": [
         { "containerName": "postgres", "condition": "HEALTHY" },
@@ -136,7 +136,7 @@
       "environment": [
         { "name": "PRODUCT_SERVICE_URL", "value": "http://localhost:8001" },
         { "name": "INVENTORY_SERVICE_URL", "value": "http://localhost:8002" },
-        { "name": "REDIS_URL", "value": "redis://redis:6379" }
+        { "name": "REDIS_URL", "value": "localhost:6379" }
       ],
       "dependsOn": [
         { "containerName": "postgres", "condition": "HEALTHY" },
