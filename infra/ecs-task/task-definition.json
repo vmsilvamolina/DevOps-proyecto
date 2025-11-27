@@ -69,7 +69,7 @@
         "interval": 10,
         "timeout": 3,
         "retries": 5
-      },
+      ],
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
@@ -91,6 +91,10 @@
         { "name": "DATABASE_URL", "value": "postgresql://admin:admin123@localhost:5432/microservices_db" },
         { "name": "REDIS_URL", "value": "localhost:6379" }
       ],
+      "dependsOn": [
+        { "containerName": "postgres", "condition": "HEALTHY" },
+        { "containerName": "redis", "condition": "HEALTHY" }
+      ],
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
@@ -111,6 +115,10 @@
       "environment": [
         { "name": "DATABASE_URL", "value": "postgresql://admin:admin123@localhost:5432/microservices_db" },
         { "name": "REDIS_URL", "value": "localhost:6379" }
+      ],
+      "dependsOn": [
+        { "containerName": "postgres", "condition": "HEALTHY" },
+        { "containerName": "redis", "condition": "HEALTHY" }
       ],
       "logConfiguration": {
         "logDriver": "awslogs",
