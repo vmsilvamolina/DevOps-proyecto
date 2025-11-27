@@ -3,7 +3,7 @@
   "networkMode": "awsvpc",
   "requiresCompatibilities": ["FARGATE"],
   "cpu": "1024",
-  "memory": "8192",
+  "memory": "4096",
   "executionRoleArn": "arn:aws:iam::851725322802:role/LabRole",
   "containerDefinitions": [
     {
@@ -18,15 +18,22 @@
         }
       ],
       "environment": [
-        {"name": "POSTGRES_USER", "value": "admin"},
-        {"name": "POSTGRES_PASSWORD", "value": "admin123"},
-        {"name": "POSTGRES_DB", "value": "microservices_db"}
+        { "name": "POSTGRES_USER", "value": "admin" },
+        { "name": "POSTGRES_PASSWORD", "value": "admin123" },
+        { "name": "POSTGRES_DB", "value": "microservices_db" }
       ],
+      "healthCheck": {
+        "command": ["CMD-SHELL", "pg_isready -U admin -d microservices_db"],
+        "interval": 10,
+        "timeout": 5,
+        "retries": 5,
+        "startPeriod": 10
+      },
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
           "awslogs-group": "/ecs/dev-core-task",
-          "awslogs-region": "${AWS_REGION}",
+          "awslogs-region": "us-east-1",
           "awslogs-stream-prefix": "postgres"
         }
       }
@@ -42,12 +49,18 @@
           "protocol": "tcp"
         }
       ],
-      "environment": [],
+      "healthCheck": {
+        "command": ["CMD", "redis-cli", "ping"],
+        "interval": 10,
+        "timeout": 3,
+        "retries": 5,
+        "startPeriod": 5
+      },
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
           "awslogs-group": "/ecs/dev-core-task",
-          "awslogs-region": "${AWS_REGION}",
+          "awslogs-region": "us-east-1",
           "awslogs-stream-prefix": "redis"
         }
       }
@@ -64,21 +77,22 @@
         }
       ],
       "environment": [
-        {"name": "DATABASE_URL", "value": "postgresql://admin:admin123@postgres:5432/microservices_db"},
-        {"name": "REDIS_URL", "value": "redis://redis:6379"}
+        { "name": "DATABASE_URL", "value": "postgresql://admin:admin123@postgres:5432/microservices_db" },
+        { "name": "REDIS_URL", "value": "redis://redis:6379" }
+      ],
+      "entryPoint": [
+        "sh",
+        "-c",
+        "until nc -z postgres 5432 && nc -z redis 6379; do echo 'Esperando a DB/Redis...'; sleep 3; done; exec npm start"
       ],
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
           "awslogs-group": "/ecs/dev-core-task",
-          "awslogs-region": "${AWS_REGION}",
+          "awslogs-region": "us-east-1",
           "awslogs-stream-prefix": "product"
         }
-      },
-      "dependsOn": [
-        {"containerName": "postgres", "condition": "START"},
-        {"containerName": "redis", "condition": "START"}
-      ]
+      }
     },
     {
       "name": "inventory",
@@ -92,21 +106,22 @@
         }
       ],
       "environment": [
-        {"name": "DATABASE_URL", "value": "postgres://admin:admin123@postgres:5432/microservices_db?sslmode=disable"},
-        {"name": "REDIS_URL", "value": "redis:6379"}
+        { "name": "DATABASE_URL", "value": "postgres://admin:admin123@postgres:5432/microservices_db?sslmode=disable" },
+        { "name": "REDIS_URL", "value": "redis:6379" }
+      ],
+      "entryPoint": [
+        "sh",
+        "-c",
+        "until nc -z postgres 5432 && nc -z redis 6379; do echo 'Esperando a DB/Redis...'; sleep 3; done; exec npm start"
       ],
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
           "awslogs-group": "/ecs/dev-core-task",
-          "awslogs-region": "${AWS_REGION}",
+          "awslogs-region": "us-east-1",
           "awslogs-stream-prefix": "inventory"
         }
-      },
-      "dependsOn": [
-        {"containerName": "postgres", "condition": "START"},
-        {"containerName": "redis", "condition": "START"}
-      ]
+      }
     },
     {
       "name": "api-gateway",
@@ -120,24 +135,23 @@
         }
       ],
       "environment": [
-        {"name": "PRODUCT_SERVICE_URL", "value": "http://localhost:8001"},
-        {"name": "INVENTORY_SERVICE_URL", "value": "http://localhost:8002"},
-        {"name": "REDIS_URL", "value": "localhost:6379"}
+        { "name": "PRODUCT_SERVICE_URL", "value": "http://product:8001" },
+        { "name": "INVENTORY_SERVICE_URL", "value": "http://inventory:8002" },
+        { "name": "REDIS_URL", "value": "redis:6379" }
+      ],
+      "entryPoint": [
+        "sh",
+        "-c",
+        "until nc -z product 8001 && nc -z inventory 8002; do echo 'Esperando a Product/Inventory...'; sleep 3; done; exec npm start"
       ],
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
           "awslogs-group": "/ecs/dev-core-task",
-          "awslogs-region": "${AWS_REGION}",
-          "awslogs-stream-prefix": "api-gateway"
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "apigateway"
         }
-      },
-      "dependsOn": [
-        {"containerName": "postgres", "condition": "START"},
-        {"containerName": "redis", "condition": "START"},
-        {"containerName": "product", "condition": "START"},
-        {"containerName": "inventory", "condition": "START"}
-      ]
+      }
     }
   ]
 }
