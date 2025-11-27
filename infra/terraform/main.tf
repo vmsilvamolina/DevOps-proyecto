@@ -75,3 +75,9 @@ module "ecs_service_core" {
   ecr_inventory_url = module.ecr.ecr_urls["inventory"]
   ecr_api_url       = module.ecr.ecr_urls["apigateway"]
 }
+
+# Lambda
+module "lambda" {
+  source      = "./modules/lambda"
+  lambda_name = "lambdaLab"  # o var.lambda_name si querés parametrizar
+}
