@@ -65,7 +65,7 @@ module "ecs_service_core" {
   service_name      = "${var.environment}-core-service"
   cluster_id        = module.ecs_cluster.cluster_id
   task_definition_arn = ""
-  desired_count     = 1
+  desired_count     = 0
   subnet_ids        = module.vpc.public_subnet_ids
   security_group_id = module.security_group.ecs_sg_id
   assign_public_ip  = true
