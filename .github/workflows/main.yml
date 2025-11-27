@@ -78,27 +78,6 @@ jobs:
           echo "PRODUCT_IMAGE=$PRODUCT_IMAGE" >> $GITHUB_ENV
           echo "INVENTORY_IMAGE=$INVENTORY_IMAGE" >> $GITHUB_ENV
 
-
-      #####################################################################
-      # NUEVO: Leer y escapar init.sql para el seeder
-      #####################################################################
-      - name: Convert init.sql to JSON safe single line
-        run: |
-          INIT_SQL=$(cat infra/database/init.sql \
-            | sed 's/\\c microservices_db;//g' \
-            | sed 's/\\/\\\\/g' \
-            | sed 's/"/\\"/g' \
-            | tr -d '\n')
-
-          echo "INIT_SQL=$INIT_SQL" >> $GITHUB_ENV
-
-
-
-      #####################################################################
-      # FIN DE LA PARTE NUEVA
-      #####################################################################
-
-
       - name: Generate updated TaskDefinition JSON
         run: |
           sed \
