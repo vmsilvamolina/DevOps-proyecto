@@ -40,3 +40,7 @@ output "ecr_product_url" {
 output "ecr_inventory_url" {
   value = module.ecr.ecr_urls["inventory"]
 }
+
+output "lambda_url" {
+  value = module.lambda.lambda_url
+}
