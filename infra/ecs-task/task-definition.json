@@ -4,7 +4,7 @@
   "requiresCompatibilities": ["FARGATE"],
   "cpu": "1024",
   "memory": "4096",
-  "executionRoleArn": "${EXECUTION_ROLE_ARN}",
+  "executionRoleArn": "arn:aws:iam::851725322802:role/LabRole",
   "containerDefinitions": [
 
     {
