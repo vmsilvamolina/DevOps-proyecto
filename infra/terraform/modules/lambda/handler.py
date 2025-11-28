@@ -1,30 +1,24 @@
+import smtplib
 import os
-import boto3
-from botocore.exceptions import ClientError
-
-ses = boto3.client("ses")  # usa la región/configuración por defecto del runtime
 
 def lambda_handler(event, context):
-    to_email = "fernandopunales@gmail.com"               # destinatario final
-    source_email = os.environ.get("fernandopunales@gmail.com")        # remitente (debe estar verificado)
-    if not source_email:
-        return {"statusCode": 500, "body": "fernandopunales@gmail.com no configurado"}
+    sender = os.environ["SENDER_EMAIL"]        # tu Gmail
+    app_password = os.environ["APP_PASSWORD"]  # contraseña de app
+    receiver = "fernandopunales@gmail.com"     # destinatario final
 
-    subject = "🚀 Nuevo Deploy Realizado"
-    body_text = "Se realizó correctamente un nuevo deploy."
+    subject = "🚀 Infra desplegada correctamente"
+    body = "La infraestructura se levantó correctamente con el pipeline."
+
+    message = f"Subject: {subject}\n\n{body}"
 
     try:
-        resp = ses.send_email(
-            Source=source_email,
-            Destination={"ToAddresses": [to_email]},
-            Message={
-                "Subject": {"Data": subject},
-                "Body": {"Text": {"Data": body_text}}
-            }
-        )
-    except ClientError as e:
-        # loguea el error en CloudWatch (CloudWatch lo recoge automáticamente)
-        print("SES error:", e.response.get("Error", {}).get("Message"))
-        return {"statusCode": 500, "body": f"Error enviando email: {e}"}
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+            server.starttls()
+            server.login(sender, app_password)
+            server.sendmail(sender, receiver, message)
 
-    return {"statusCode": 200, "body": "Notificación enviada correctamente."}
+        return {"statusCode": 200, "body": "Email enviado correctamente."}
+
+    except Exception as e:
+        print("Error enviando email:", e)
+        return {"statusCode": 500, "body": str(e)}
