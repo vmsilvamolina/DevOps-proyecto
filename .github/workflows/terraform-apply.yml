@@ -41,11 +41,19 @@ jobs:
 
       - name: Terraform Plan
         working-directory: infra/terraform
-        run: terraform plan -var-file="${{ github.event.inputs.environment }}.tfvars" -out=tfplan
+        run: terraform plan \
+          -var-file="${{ github.event.inputs.environment }}.tfvars" \
+          -var="sender_email=${{ secrets.SENDER_EMAIL }}" \
+          -var="app_password=${{ secrets.APP_PASSWORD }}" \
+          -out=tfplan
 
       - name: Terraform Apply
         working-directory: infra/terraform
-        run: terraform apply -auto-approve tfplan
+        run: terraform apply -auto-approve \
+          -var-file="${{ github.event.inputs.environment }}.tfvars" \
+          -var="sender_email=${{ secrets.SENDER_EMAIL }}" \
+          -var="app_password=${{ secrets.APP_PASSWORD }}" \
+          tfplan
 
       # ===================================================
       # EXPORTAR OUTPUTS ECR LIMPIOS (FILTRANDO SOLO URL)
