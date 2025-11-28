@@ -1,5 +1,4 @@
-{
-  "family": "dev-core-task",
+"family": "dev-core-task",
   "networkMode": "awsvpc",
   "requiresCompatibilities": ["FARGATE"],
   "cpu": "1024",
@@ -12,7 +11,7 @@
       "image": "postgres:15-alpine",
       "essential": true,
       "portMappings": [
-        { "containerPort": 5432, "hostPort": 5432, "protocol": "tcp" }
+        { "containerPort": 5432, "protocol": "tcp" }
       ],
       "environment": [
         { "name": "POSTGRES_USER", "value": "admin" },
@@ -42,7 +41,7 @@
       "dependsOn": [
         { "containerName": "postgres", "condition": "HEALTHY" }
       ],
-      "command": ["sh", "-c", "PGPASSWORD=admin123 psql -h localhost -U admin -d microservices_db -c \"CREATE TABLE IF NOT EXISTS products (id SERIAL PRIMARY KEY, name VARCHAR(255) NOT NULL, description TEXT, price DECIMAL(10, 2) NOT NULL, category VARCHAR(100), created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP); CREATE TABLE IF NOT EXISTS inventory (id SERIAL PRIMARY KEY, product_id INTEGER NOT NULL UNIQUE, quantity INTEGER NOT NULL DEFAULT 0, warehouse VARCHAR(100), last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE); CREATE INDEX IF NOT EXISTS idx_products_category ON products(category); CREATE INDEX IF NOT EXISTS idx_inventory_product_id ON inventory(product_id); INSERT INTO products (name, description, price, category) SELECT 'Laptop Dell XPS 13', 'Ultrabook potente y ligera', 1299.99, 'Electronics' WHERE NOT EXISTS (SELECT 1 FROM products WHERE name = 'Laptop Dell XPS 13'); INSERT INTO products (name, description, price, category) SELECT 'Mouse Logitech MX Master', 'Mouse ergonomico inalambrico', 99.99, 'Electronics' WHERE NOT EXISTS (SELECT 1 FROM products WHERE name = 'Mouse Logitech MX Master'); INSERT INTO products (name, description, price, category) SELECT 'Teclado Mecanico', 'Teclado mecanico RGB', 149.99, 'Electronics' WHERE NOT EXISTS (SELECT 1 FROM products WHERE name = 'Teclado Mecanico'); INSERT INTO products (name, description, price, category) SELECT 'Monitor 4K', 'Monitor 27 pulgadas 4K', 499.99, 'Electronics' WHERE NOT EXISTS (SELECT 1 FROM products WHERE name = 'Monitor 4K'); INSERT INTO products (name, description, price, category) SELECT 'Webcam HD', 'Camara web Full HD', 79.99, 'Electronics' WHERE NOT EXISTS (SELECT 1 FROM products WHERE name = 'Webcam HD'); INSERT INTO inventory (product_id, quantity, warehouse) SELECT 1, 50, 'Warehouse A' WHERE NOT EXISTS (SELECT 1 FROM inventory WHERE product_id = 1); INSERT INTO inventory (product_id, quantity, warehouse) SELECT 2, 150, 'Warehouse A' WHERE NOT EXISTS (SELECT 1 FROM inventory WHERE product_id = 2); INSERT INTO inventory (product_id, quantity, warehouse) SELECT 3, 75, 'Warehouse B' WHERE NOT EXISTS (SELECT 1 FROM inventory WHERE product_id = 3); INSERT INTO inventory (product_id, quantity, warehouse) SELECT 4, 30, 'Warehouse A' WHERE NOT EXISTS (SELECT 1 FROM inventory WHERE product_id = 4); INSERT INTO inventory (product_id, quantity, warehouse) SELECT 5, 100, 'Warehouse B' WHERE NOT EXISTS (SELECT 1 FROM inventory WHERE product_id = 5);\" && echo 'Database initialized successfully'"],
+      "command": ["sh", "-c", "PGPASSWORD=admin123 psql -h postgres -U admin -d microservices_db -c \"CREATE TABLE IF NOT EXISTS products (id SERIAL PRIMARY KEY, name VARCHAR(255) NOT NULL, description TEXT, price DECIMAL(10, 2) NOT NULL, category VARCHAR(100), created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP); CREATE TABLE IF NOT EXISTS inventory (id SERIAL PRIMARY KEY, product_id INTEGER NOT NULL UNIQUE, quantity INTEGER NOT NULL DEFAULT 0, warehouse VARCHAR(100), last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE); CREATE INDEX IF NOT EXISTS idx_products_category ON products(category); CREATE INDEX IF NOT EXISTS idx_inventory_product_id ON inventory(product_id); INSERT INTO products (name, description, price, category) SELECT 'Laptop Dell XPS 13', 'Ultrabook potente y ligera', 1299.99, 'Electronics' WHERE NOT EXISTS (SELECT 1 FROM products WHERE name = 'Laptop Dell XPS 13'); INSERT INTO products (name, description, price, category) SELECT 'Mouse Logitech MX Master', 'Mouse ergonomico inalambrico', 99.99, 'Electronics' WHERE NOT EXISTS (SELECT 1 FROM products WHERE name = 'Mouse Logitech MX Master'); INSERT INTO products (name, description, price, category) SELECT 'Teclado Mecanico', 'Teclado mecanico RGB', 149.99, 'Electronics' WHERE NOT EXISTS (SELECT 1 FROM products WHERE name = 'Teclado Mecanico'); INSERT INTO products (name, description, price, category) SELECT 'Monitor 4K', 'Monitor 27 pulgadas 4K', 499.99, 'Electronics' WHERE NOT EXISTS (SELECT 1 FROM products WHERE name = 'Monitor 4K'); INSERT INTO products (name, description, price, category) SELECT 'Webcam HD', 'Camara web Full HD', 79.99, 'Electronics' WHERE NOT EXISTS (SELECT 1 FROM products WHERE name = 'Webcam HD'); INSERT INTO inventory (product_id, quantity, warehouse) SELECT 1, 50, 'Warehouse A' WHERE NOT EXISTS (SELECT 1 FROM inventory WHERE product_id = 1); INSERT INTO inventory (product_id, quantity, warehouse) SELECT 2, 150, 'Warehouse A' WHERE NOT EXISTS (SELECT 1 FROM inventory WHERE product_id = 2); INSERT INTO inventory (product_id, quantity, warehouse) SELECT 3, 75, 'Warehouse B' WHERE NOT EXISTS (SELECT 1 FROM inventory WHERE product_id = 3); INSERT INTO inventory (product_id, quantity, warehouse) SELECT 4, 30, 'Warehouse A' WHERE NOT EXISTS (SELECT 1 FROM inventory WHERE product_id = 4); INSERT INTO inventory (product_id, quantity, warehouse) SELECT 5, 100, 'Warehouse B' WHERE NOT EXISTS (SELECT 1 FROM inventory WHERE product_id = 5);\" && echo 'Database initialized successfully'"],
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
@@ -58,7 +57,7 @@
       "image": "redis:7-alpine",
       "essential": true,
       "portMappings": [
-        { "containerPort": 6379, "hostPort": 6379, "protocol": "tcp" }
+        { "containerPort": 6379, "protocol": "tcp" }
       ],
       "healthCheck": {
         "command": ["CMD", "redis-cli", "ping"],
@@ -81,11 +80,11 @@
       "image": "${PRODUCT_IMAGE}",
       "essential": true,
       "portMappings": [
-        { "containerPort": 8001, "hostPort": 8001, "protocol": "tcp" }
+        { "containerPort": 8001, "protocol": "tcp" }
       ],
       "environment": [
-        { "name": "DATABASE_URL", "value": "postgresql://admin:admin123@localhost:5432/microservices_db" },
-        { "name": "REDIS_URL", "value": "localhost:6379" }
+        { "name": "DATABASE_URL", "value": "postgresql://admin:admin123@postgres:5432/microservices_db?sslmode=disable" },
+        { "name": "REDIS_URL", "value": "redis://redis:6379" }
       ],
       "dependsOn": [
         { "containerName": "postgres", "condition": "HEALTHY" },
@@ -106,11 +105,11 @@
       "image": "${INVENTORY_IMAGE}",
       "essential": true,
       "portMappings": [
-        { "containerPort": 8002, "hostPort": 8002, "protocol": "tcp" }
+        { "containerPort": 8002, "protocol": "tcp" }
       ],
       "environment": [
-        { "name": "DATABASE_URL", "value": "postgresql://admin:admin123@localhost:5432/microservices_db" },
-        { "name": "REDIS_URL", "value": "localhost:6379" }
+        { "name": "DATABASE_URL", "value": "postgresql://admin:admin123@postgres:5432/microservices_db?sslmode=disable" },
+        { "name": "REDIS_URL", "value": "redis://redis:6379" }
       ],
       "dependsOn": [
         { "containerName": "postgres", "condition": "HEALTHY" },
@@ -131,12 +130,12 @@
       "image": "${APIGATEWAY_IMAGE}",
       "essential": true,
       "portMappings": [
-        { "containerPort": 8000, "hostPort": 8000, "protocol": "tcp" }
+        { "containerPort": 8000, "protocol": "tcp" }
       ],
       "environment": [
-        { "name": "PRODUCT_SERVICE_URL", "value": "http://localhost:8001" },
-        { "name": "INVENTORY_SERVICE_URL", "value": "http://localhost:8002" },
-        { "name": "REDIS_URL", "value": "localhost:6379" }
+        { "name": "PRODUCT_SERVICE_URL", "value": "http://product:8001" },
+        { "name": "INVENTORY_SERVICE_URL", "value": "http://inventory:8002" },
+        { "name": "REDIS_URL", "value": "redis://redis:6379" }
       ],
       "dependsOn": [
         { "containerName": "postgres", "condition": "HEALTHY" },
