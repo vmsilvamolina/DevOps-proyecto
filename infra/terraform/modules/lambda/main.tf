@@ -8,6 +8,11 @@ data "archive_file" "zip" {
   output_path = "${path.module}/handler.zip"
 }
 
+# Adjunta la policy administrada AmazonSESFullAccess al role existente
+resource "aws_iam_role_policy_attachment" "lab_ses_attach" {
+  role       = data.aws_iam_role.lab_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSESFullAccess"
+}
 
 resource "aws_lambda_function" "handler" {
   filename         = data.archive_file.zip.output_path
