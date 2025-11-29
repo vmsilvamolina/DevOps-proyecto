@@ -70,13 +70,18 @@ jobs:
           GH_TOKEN: ${{ secrets.REPO_ADMIN_PAT }}
 
       - name: Obtener URL de la Lambda
+        id: get-lambda-url
         working-directory: infra/terraform
         run: |
-          echo "== Arranca =="
-          terraform output -raw lambda_url > lambda_url.txt
-          cat lambda_url.txt
-          echo "=============
+          echo "== Obteniendo URL de Lambda =="
+          LAMBDA_URL=$(terraform output -raw lambda_url)
+          echo "URL obtenida: $LAMBDA_URL"
+          echo "lambda_url=$LAMBDA_URL" >> $GITHUB_OUTPUT
+          echo "============="
 
+      - name: Verificar URL (opcional - para debug)
+        run: |
+          echo "La URL de la Lambda es: ${{ steps.get-lambda-url.outputs.lambda_url }}"
 
       - name: Ejecutar Lambda vía curl
         run: |
