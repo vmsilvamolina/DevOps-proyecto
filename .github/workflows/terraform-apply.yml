@@ -67,7 +67,7 @@ jobs:
           gh secret set ECR_PRODUCT_URL   --body "$PRODUCT"
           gh secret set ECR_INVENTORY_URL --body "$INVENTORY"
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.REPO_ADMIN_PAT }}
 
       - name: Obtener URL de la Lambda
         working-directory: infra/terraform
