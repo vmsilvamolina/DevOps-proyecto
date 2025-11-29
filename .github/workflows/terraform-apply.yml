@@ -41,23 +41,21 @@ jobs:
 
       - name: Terraform Plan
         working-directory: infra/terraform
-        run: terraform plan \
-          -var-file="${{ github.event.inputs.environment }}.tfvars" \
-          -var="sender_email=${{ secrets.SENDER_EMAIL }}" \
-          -var="app_password=${{ secrets.APP_PASSWORD }}" \
-          -out=tfplan
+        run: |
+          terraform plan \
+            -var-file="${{ github.event.inputs.environment }}.tfvars" \
+            -var="sender_email=${{ secrets.SENDER_EMAIL }}" \
+            -var="app_password=${{ secrets.APP_PASSWORD }}" \
+            -out=tfplan
 
       - name: Terraform Apply
         working-directory: infra/terraform
-        run: terraform apply -auto-approve \
-          -var-file="${{ github.event.inputs.environment }}.tfvars" \
-          -var="sender_email=${{ secrets.SENDER_EMAIL }}" \
-          -var="app_password=${{ secrets.APP_PASSWORD }}" \
-          tfplan
+        run: |
+          terraform apply -auto-approve tfplan \
+            -var-file="${{ github.event.inputs.environment }}.tfvars" \
+            -var="sender_email=${{ secrets.SENDER_EMAIL }}" \
+            -var="app_password=${{ secrets.APP_PASSWORD }}"
 
-      # ===================================================
-      # EXPORTAR OUTPUTS ECR LIMPIOS (FILTRANDO SOLO URL)
-      # ===================================================
       - name: Exportar ECR URLs a secretos de GitHub
         working-directory: infra/terraform
         run: |
@@ -77,13 +75,9 @@ jobs:
           gh secret set ECR_API_URL       --body "$API"
           gh secret set ECR_PRODUCT_URL   --body "$PRODUCT"
           gh secret set ECR_INVENTORY_URL --body "$INVENTORY"
-
         env:
           GH_TOKEN: ${{ secrets.REPO_ADMIN_PAT }}
 
-      # ===================================================
-      # EJECUTAR LAMBDA VÍA CURL DESPUÉS DEL DEPLOY
-      # ===================================================
       - name: Ejecutar Lambda vía curl
         working-directory: infra/terraform
         run: |
