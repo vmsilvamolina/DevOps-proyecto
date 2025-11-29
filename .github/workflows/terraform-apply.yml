@@ -72,7 +72,10 @@ jobs:
       - name: Obtener URL de la Lambda
         working-directory: infra/terraform
         run: |
+          echo "== Arranca =="
           terraform output -raw lambda_url > lambda_url.txt
+          cat lambda_url.txt
+          echo "=============
           cat $(terraform output -raw lambda_url)
           echo "Llegó"
           URL=$(cat lambda_url.txt | tr -d '[:space:]')
