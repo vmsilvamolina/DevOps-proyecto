@@ -73,6 +73,8 @@ jobs:
         working-directory: infra/terraform
         run: |
           terraform output -raw lambda_url > lambda_url.txt
+          cat $(terraform output -raw lambda_url)
+          echo "Llegó"
           URL=$(cat lambda_url.txt | tr -d '[:space:]')
           printf "LAMBDA_URL=%s\n" "$URL" >> $GITHUB_ENV
 
