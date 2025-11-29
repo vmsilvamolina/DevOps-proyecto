@@ -6,7 +6,7 @@ def lambda_handler(event, context):
     app_password = os.environ["APP_PASSWORD"]  # contraseña de app
     receiver = "rodrigosilvaromero14@gmail.com"     # destinatario final
 
-    subject = "🚀 Infra desplegada correctamente"
+    subject = "Infra desplegada correctamente"
     body = "La infraestructura se levantó correctamente con el pipeline."
 
     message = f"Subject: {subject}\n\n{body}"
