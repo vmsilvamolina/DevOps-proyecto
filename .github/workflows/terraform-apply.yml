@@ -47,9 +47,9 @@ jobs:
         working-directory: infra/terraform
         run: |
           terraform apply -auto-approve tfplan \
-            -var-file="${{ github.event.inputs.environment }}.tfvars" \
             -var="sender_email=${{ secrets.SENDER_EMAIL }}" \
-            -var="app_password=${{ secrets.APP_PASSWORD }}"
+            -var="app_password=${{ secrets.APP_PASSWORD }}" \
+            tfplan
 
       - name: Exportar ECR URLs a secretos de GitHub
         working-directory: infra/terraform
