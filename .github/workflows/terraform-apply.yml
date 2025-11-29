@@ -72,9 +72,9 @@ jobs:
       - name: Obtener URL de la Lambda
         working-directory: infra/terraform
         run: |
-          RAW=$(terraform output -raw lambda_url)
-          CLEAN=$(echo "$RAW" | tr -d '[:space:]')
-          printf "LAMBDA_URL=%s\n" "$CLEAN" >> $GITHUB_ENV
+          terraform output -raw lambda_url > lambda_url.txt
+          URL=$(cat lambda_url.txt | tr -d '[:space:]')
+          printf "LAMBDA_URL=%s\n" "$URL" >> $GITHUB_ENV
 
       - name: Ejecutar Lambda vía curl
         run: |
