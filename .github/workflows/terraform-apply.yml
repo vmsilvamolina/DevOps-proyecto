@@ -76,10 +76,7 @@ jobs:
           terraform output -raw lambda_url > lambda_url.txt
           cat lambda_url.txt
           echo "=============
-          cat $(terraform output -raw lambda_url)
-          echo "Llegó"
-          URL=$(cat lambda_url.txt | tr -d '[:space:]')
-          printf "LAMBDA_URL=%s\n" "$URL" >> $GITHUB_ENV
+
 
       - name: Ejecutar Lambda vía curl
         run: |
